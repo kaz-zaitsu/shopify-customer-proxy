@@ -156,11 +156,11 @@ app.post("/customer/update", async (req, res) => {
     if (form.birthday)
       metafields.push({ ownerId: customerGid, namespace: "facts", key: "birth_date", type: "date", value: form.birthday });
     if (form.gender)
-      metafields.push({ ownerId: customerGid, namespace: "custom", key: "member-gender", type: "single_line_text_field", value: form.gender });
+      metafields.push({ ownerId: customerGid, namespace: "custom", key: "member-gender", type: "list.single_line_text_field", value: JSON.stringify([form.gender]) });
     if (form.kanaLastname)
-      metafields.push({ ownerId: customerGid, namespace: "custom", key: "kana-lastname", type: "single_line_text_field", value: form.kanaLastname });
+      metafields.push({ ownerId: customerGid, namespace: "custom", key: "kana-lastname", type: "list.single_line_text_field", value: JSON.stringify([form.kanaLastname]) });
     if (form.kanaFirstname)
-      metafields.push({ ownerId: customerGid, namespace: "custom", key: "kana-firstname", type: "single_line_text_field", value: form.kanaFirstname });
+      metafields.push({ ownerId: customerGid, namespace: "custom", key: "kana-firstname", type: "list.single_line_text_field", value: JSON.stringify([form.kanaFirstname]) });
 
     if (metafields.length > 0) {
       const metaResult = await adminGraphQL(
