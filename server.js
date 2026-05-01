@@ -102,12 +102,7 @@ app.post("/customer/update", async (req, res) => {
     const customerGid = buildCustomerGid(rawId);
     if (!customerGid) return res.status(400).json({ error: "customer id not found" });
 
-    // ① 標準フィールド更新
-    const emailMarketingConsent =
-      form.emailMarketing === "SUBSCRIBED"
-        ? { marketingState: "SUBSCRIBED", marketingOptInLevel: "SINGLE_OPT_IN" }
-        : { marketingState: form.emailMarketing };
-
+    // ① 標準フィールド更新（emailMarketingConsent は別ミューテーション）
     const updateResult = await adminGraphQL(
       `mutation CustomerUpdate($input: CustomerInput!) {
         customerUpdate(input: $input) {
@@ -121,7 +116,6 @@ app.post("/customer/update", async (req, res) => {
           firstName: form.firstName,
           lastName: form.lastName,
           phone: form.phone || null,
-          emailMarketingConsent,
         },
       }
     );
@@ -129,6 +123,32 @@ app.post("/customer/update", async (req, res) => {
     const updateErrors = updateResult.data?.customerUpdate?.userErrors ?? [];
     if (updateErrors.length) {
       return res.status(400).json({ error: updateErrors[0].message });
+    }
+
+    // ② メールマーケティング区分の更新
+    const emailMarketingConsent =
+      form.emailMarketing === "SUBSCRIBED"
+        ? { marketingState: "SUBSCRIBED", marketingOptInLevel: "SINGLE_OPT_IN" }
+        : { marketingState: form.emailMarketing };
+
+    const emailResult = await adminGraphQL(
+      `mutation CustomerEmailMarketingConsentUpdate($input: CustomerEmailMarketingConsentUpdateInput!) {
+        customerEmailMarketingConsentUpdate(input: $input) {
+          customer { id }
+          userErrors { field message }
+        }
+      }`,
+      {
+        input: {
+          customerId: customerGid,
+          emailMarketingConsent,
+        },
+      }
+    );
+
+    const emailErrors = emailResult.data?.customerEmailMarketingConsentUpdate?.userErrors ?? [];
+    if (emailErrors.length) {
+      return res.status(400).json({ error: emailErrors[0].message });
     }
 
     // ② メタフィールド更新
